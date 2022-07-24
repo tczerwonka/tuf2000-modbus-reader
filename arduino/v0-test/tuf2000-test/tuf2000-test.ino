@@ -11,6 +11,12 @@
 #define VELOCITY_REGISTER 6
 #define VELOCITY_DATA_SIZE 2 //real4
 
+#define POS_REGISTER 9
+#define POS_DATA_SIZE 2 //long
+
+#define RA_REGISTER 1
+#define RA_DATA_SIZE 20
+
 #define SIGNALQUALITY_REGISTER 92
 #define SIGNALQUALITY_DATA_SIZE 1 //high byte step, low byte sq
 
@@ -21,7 +27,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println("Welcome");
-  swSerial.begin(1200);
+  swSerial.begin(9600);
   sensor.begin(MODBUS_DEVICE_ID, swSerial);
 }
 
@@ -29,8 +35,12 @@ void loop()
 {
   Serial.println("---");
   readFlow();
+  //delay(100);
+  //readVelocity();
   delay(100);
-  readVelocity();
+  readPosAccu();
+  delay(100);
+  readAll();
   delay(3000);
 }
 
@@ -67,7 +77,7 @@ void readFlow() {
     Serial.print("Flow gpm is ");
     //convert from m^3/hr to gpm
     //flow = (flow / 0.23);
-    //flow = (flow / 4.402);
+    flow = (flow * 4.402);
     Serial.println(flow, 6);
   }
   else {
@@ -107,6 +117,80 @@ void readVelocity() {
     memcpy(&velocity, &buf, sizeof(float));
     Serial.print("Velocity m/s is ");
     Serial.println(velocity, 6);
+  }
+  else {
+    Serial.print("Failure. Code: ");
+    Serial.println(result);
+  }
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//readPosAccu
+// registers 9-10 -- long
+////////////////////////////////////////////////////////////////////////////////
+void readPosAccu() {
+  uint8_t j, result;
+  uint16_t buf[POS_DATA_SIZE];
+  uint16_t temp;
+  float flow;
+
+  Serial.println("Reading registers");
+  result = sensor.readHoldingRegisters(POS_REGISTER, POS_DATA_SIZE);
+
+  if (result == sensor.ku8MBSuccess)
+  {
+    Serial.println("Success! Processing...");
+    for (j = 0; j < POS_DATA_SIZE; j++)
+    {
+      buf[j] = sensor.getResponseBuffer(j);
+      Serial.print(buf[j]);
+      Serial.print(" ");
+    }
+    Serial.println("<- done");
+    // swap bytes because the data comes in Big Endian!
+    temp = buf[1];
+    buf[1] = buf[0];
+    buf[0] = temp;
+    // hand-assemble a single-precision float from the bytestream
+    memcpy(&flow, &buf, sizeof(float));
+    Serial.print("pos accu gal ");
+    Serial.println(flow);
+  }
+  else {
+    Serial.print("Failure. Code: ");
+    Serial.println(result);
+  }
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//readPosAccu
+// registers 9-10 -- long
+////////////////////////////////////////////////////////////////////////////////
+void readAll() {
+  uint8_t j, result;
+  uint16_t buf[RA_DATA_SIZE];
+  uint16_t temp;
+  float flow;
+
+  Serial.println("Reading registers");
+  result = sensor.readHoldingRegisters(RA_REGISTER, RA_DATA_SIZE);
+
+  if (result == sensor.ku8MBSuccess)
+  {
+    Serial.println("Success! Processing...");
+    for (j = 0; j < RA_DATA_SIZE; j++)
+    {
+      buf[j] = sensor.getResponseBuffer(j);
+      Serial.print(buf[j]);
+      Serial.print(" ");
+    }
+    Serial.println("<- done");
+    
   }
   else {
     Serial.print("Failure. Code: ");
