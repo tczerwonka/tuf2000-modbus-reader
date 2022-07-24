@@ -11,7 +11,7 @@ from struct import pack, unpack
 from minimalmodbus import Instrument, MODE_RTU
 import serial
 
-serialPort = '/dev/ttyUSB2'
+serialPort = '/dev/ttyUSB0'
 flowMeterAddress = 1
 
 instrument = Instrument(serialPort, flowMeterAddress)
@@ -24,24 +24,27 @@ instrument.mode = MODE_RTU
 instrument.debug = False
 
 
+
+#for type REAL4
 def readFloatReg(regOne, regTwo):
-    data = (instrument.read_register(
-        regOne), instrument.read_register(regTwo))
+    data = (instrument.read_register(regOne), instrument.read_register(regTwo))
     packed_string = pack("HH", *data)
     unpacked_string = unpack("f", packed_string)[0]
     return float("{:.2f}".format(unpacked_string))
 
 
 def readLongReg(regOne, regTwo):
-    return ((instrument.read_register(regTwo) << 0) & 0xFFFF) + \
-        ((instrument.read_register(regOne) << 16))
+    return ((instrument.read_register(regTwo) << 0) & 0xFFFF) +  ((instrument.read_register(regOne) << 16))
 
+def readSq(regOne):
+    #return ((instrument.read_register(regOne).to_bytes(2, byteorder='big')))
+    return ((instrument.read_register(regOne)))
 
 
 def readFlow():
     #type REAL4
+    #this is in m^3/hr
     print(f'Flow rate: {readFloatReg(1, 2)} m3/h')
-
 
 def readEnergyFlow():
     #type REAL4
@@ -65,7 +68,7 @@ def readNetAccumulator():
 
 def readError():
     #72 is a bit value 
-    print(f'Error: {instrument.read_register(72)}')
+    print(f'Error: {bin(instrument.read_register(72))}')
 
 
 def readWorkTime():
@@ -85,7 +88,8 @@ def readStreamStrength():
 
 
 def readSignalQuality():
-    print(f'Signal quality: {instrument.read_register(92)}')
+    #print(f'Signal quality: {instrument.read_register(92)}')
+    print(f'Signal quality: {readSq(92)}')
 
 
 if __name__ == '__main__':
@@ -103,14 +107,19 @@ if __name__ == '__main__':
         #readEnergyFlow()
         readVelocity()
         sleep(0.1)
-        #readFluidSoundSpeed()
+        readFluidSoundSpeed()
+        sleep(0.1)
         readNetAccumulator()
         sleep(0.1)
         readPositiveAccumulator()
         sleep(0.1)
-        #readStreamStrength()
-        #readWorkTime()
-        #readOnOffTotal()
+        readStreamStrength()
+        sleep(0.1)
+        readWorkTime()
+        sleep(0.1)
+        readOnOffTotal()
+        sleep(0.1)
         readSignalQuality()
-        #readError()
+        sleep(0.1)
+        readError()
         print('*-------------------------------------------------------------*')

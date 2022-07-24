@@ -6,7 +6,7 @@
 import minimalmodbus
 
 
-instrument = minimalmodbus.Instrument('/dev/ttyUSB2', 1, debug = False) 
+instrument = minimalmodbus.Instrument('/dev/ttyUSB0', 1, debug = False) 
 instrument.serial.baudrate = 9600
 
 reynolds = instrument.read_float(99)
