@@ -11,7 +11,7 @@ from struct import pack, unpack
 from minimalmodbus import Instrument, MODE_RTU
 import serial
 
-serialPort = '/dev/ttyUSB0'
+serialPort = '/dev/ttyUSB2'
 flowMeterAddress = 1
 
 instrument = Instrument(serialPort, flowMeterAddress)
